@@ -1,0 +1,479 @@
+﻿<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aqoid fanidan Oraliq Nazorat Testi</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; color: #333; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 10px; font-size: 24px; }
+        .sub-header { text-align: center; color: #7f8c8d; margin-bottom: 25px; font-size: 14px; }
+        .info-panel { display: flex; justify-content: space-between; background: #eef2f5; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .timer { color: #e74c3c; font-size: 18px; }
+        .q-card { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .q-text { font-size: 16px; font-weight: 600; color: #2c3e50; margin-bottom: 15px; line-height: 1.5; }
+        .options { list-style: none; }
+        .option-item { margin-bottom: 10px; }
+        .option-label { display: flex; align-items: center; padding: 12px 15px; background: #f8f9fa; border: 1px solid #dcdfe6; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option-label:hover { background: #e8f4ff; border-color: #409eff; }
+        .option-label input { margin-right: 12px; accent-color: #3498db; width: 18px; height: 18px; }
+        button.btn-submit { display: block; width: 100%; padding: 15px; background: #27ae60; color: #fff; font-size: 18px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: background 0.3s; margin-top: 20px; }
+        button.btn-submit:hover { background: #219150; }
+        .result-box { display: none; text-align: center; padding: 30px; }
+        .result-score { font-size: 48px; color: #27ae60; font-weight: bold; margin: 20px 0; }
+        .btn-restart { padding: 12px 25px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Aqoid fanidan Oraliq Nazorat Testi</h1>
+    <p class="sub-header">Soatmurot domla | Jami: 30 ta savol | Vaqt: 40 daqiqa</p>
+
+    <div id="quiz-screen">
+        <div class="info-panel">
+            <div>Savollar: <span id="q-counter">0/30</span></div>
+            <div class="timer">Vaqt: <span id="time-left">40:00</span></div>
+        </div>
+
+        <form id="quiz-form">
+            <div id="questions-container"></div>
+            <button type="submit" class="btn-submit">Testni yakunlash</button>
+        </form>
+    </div>
+
+    <div id="result-screen" class="result-box">
+        <h2>Test Natijasi</h2>
+        <div class="result-score" id="score-text">0 / 30</div>
+        <p id="time-taken-text" style="margin-bottom: 20px; color: #7f8c8d;"></p>
+        <button class="btn-restart" onclick="location.reload()">Qayta topshirish</button>
+    </div>
+</div>
+
+<script>
+const rawQuestions = [
+    {
+        q: "Imom Abul Barakot an-Nasafiyning toʻliq ismi va unga berilgan laqab qaysi javobda toʻgʻri koʻrsatilgan?",
+        options: ["Maymun ibn Muhammad ibn Muhammad an-Nasafiy – “Abul Muin”", "Umar ibn Muhammad an-Nasafiy – “Najmuddin”", "Abdulloh ibn Ahmad ibn Mahmud an-Nasafiy – “Hofizuddin”", "Muhammad ibn Muhammad an-Nasafiy – “Burhoniddin”"],
+        answer: 2
+    },
+    {
+        q: "Movarounnahrdagi “Nasaf” shahri qaysi hududlar oraligʻida joylashgan yirik shahar sifatida taʼriflangan?",
+        options: ["Xuziston va Isfahon oraligʻida", "Jayhun va Samarqand oraligʻida", "Ahvoz va Xazar oʻlkalari oraligʻida", "Buxoro va Fargʻona oraligʻida"],
+        answer: 1
+    },
+    {
+        q: "Quyidagi asarlardan qaysi biri 508-hijriy yilda vafot etgan shayx Abul Muin Maymun ibn Muhammad an-Nasafiyga tegishli emas?",
+        options: ["“Tabsiratul adilla” («تبصرة الأدلة»)", "“Bahrul kalom” («بحر الكلام»)", "“at-Tamhid li-qavoidit tavhid” («التمهيد لقواعد التوحيد»)", "“al-Muqaddimatul Burhoniya” («المقدمة البرهانية»)"],
+        answer: 3
+    },
+    {
+        q: "Abul Muin an-Nasafiyning shogirdi boʻlgan, islomiy va lugʻaviy ilmlarda yuzga yaqin asar yozgan hamda 537-hijriy yilda vafot etgan alloma kim?",
+        options: ["Imom Najmuddin Abu Hafs an-Nasafiy", "Imom Abul Mutiʼ Makhul ibn al-Fazl an-Nasafiy", "Burhoniddin Muhammad ibn Muhammad an-Nasafiy", "Husomiddin as-Sigʻnoqiy"],
+        answer: 0
+    },
+    {
+        q: "Abul Muin an-Nasafiyning bobosi – Imom Abul Mutiʼ Makhul ibn al-Fazl an-Nasafiy (vaf. 318 h.) qalamiga mansub asarlar qatorini toping.",
+        options: ["“al-Vozih”, “al-Muqaddimatul Burhoniya”, “Matnul aqoidin Nasafiya”", "“Iyzohul mahajja fi kavnil aqli hujja”, “Manohijul adilla fil furuʼ”", "“al-Luʼluʼiyot fil mavoiz”, “al-Lubob”, “ar-Radd ala ahlil bidaʼ val ahvo”", "“Taʼsisul qavoid fi ismatil anbiyo”, “Hal mushkilotil Qudriy”"],
+        answer: 2
+    },
+    {
+        q: "Tadqiqotchi Imom Abul Barakot an-Nasafiyning tugʻilgan yilini taxminan 610-620-hijriy yillar oraligʻida deb belgilashiga asosiy sabab nima?",
+        options: ["Uning 666-hijriy yilda vafot etgan Aliy ibn Muhammad al-Buxoriydan ijoza olgani", "Uning 642-hijriy yilda vafot etgan Imom Muhammad ibn Abdussattor al-Kardariyda tahsil olgani", "Uning 651-hijriy yilda Bagʻdodga safar qilgani haqidagi tarixiy qaydlar", "“Umdatul aqoid” asarini 635-hijriy yilda yozib tugatgani"],
+        answer: 1
+    },
+    {
+        q: "Imom Abul Barakot an-Nasafiy tugʻilgan “Iyzaj” («إيذج») maskani haqida keltirilgan toʻgʻri maʼlumotni toping.",
+        options: ["Ahvoz va Xazar oʻlkalariga qarashli boʻlib, Imom Abu Muhammad Yahyo ibn al-Hasan ibn Furak tugʻilgan shahar", "Bagʻdod yaqinidagi kichik qishloq boʻlib, u yerda Burhoniddin an-Nasafiy yashab vafot etgan", "Damashq atrofidagi shahar boʻlib, alloma 710-hijriy yilda u yerga koʻchib borgan", "Xuziston (Xuston) va Isfahon oraligʻidagi togʻlar orasida joylashgan, islom hukmronligi davrida ekinzorlar bilan obod boʻlgan shahar"],
+        answer: 3
+    },
+    {
+        q: "Imom Abul Barakot an-Nasafiy hanafiy mazhabi usulini oʻrgangan ustozi – Imom Muhammad ibn Abdussattor al-Kardariyning asari qaysi qatorda berilgan?",
+        options: ["“Taʼsisul qavoid fi ismatil anbiyo” («تأسيس القواعد في عصمة الأنبياء»)", "“al-Moʻjaz fi sharhil Manzumatin Nasafiya” («الموجز في شرح المنظومة النسفية»)", "“al-Vofiy” («الوافي») va “al-Kofiy” («الكافي»)", "“Sharhul Jomiʼil kabir lish-Shayboniy” («شرح الجامع الكبير للشيباني»)"],
+        answer: 0
+    },
+    {
+        q: "“Najmul ulamo” va “Hamidul milla vad-din” laqablari bilan tanilgan, 666-hijriy yil zulqaʼda oyida vafot etgan Abul Barakot an-Nasafiyning ustozi kim?",
+        options: ["Badriddin Muhammad ibn Mahmud al-Kardariy (Javohirzoda)", "Nuriddin as-Sobuniy", "Aliy ibn Muhammad ibn Aliy ar-Romis al-Buxoriy", "Badriddin as-Samarqandiy"],
+        answer: 2
+    },
+    {
+        q: "Imom Abul Barakot an-Nasafiyning shogirdi Husomiddin as-Sigʻnoqiy oʻzining “Sharhul Hidoya” asarida “ash-Shayx” («الشيخ») va “al-Ustoz” («الأستاذ») lafzlarini qoʻllaganda kimlarni nazarda tutgan?",
+        options: ["“ash-Shayx” deganda Shamsul aimma al-Kardariyni, “al-Ustoz” deganda esa Imom an-Nasafiyni", "“ash-Shayx” deganda Abul Muin an-Nasafiyni, “al-Ustoz” deganda esa al-Bazdaviyni", "“ash-Shayx” deganda al-Axsikatiyni, “al-Ustoz” deganda esa az-Zamaxshariyni", "“ash-Shayx” deganda Imom an-Nasafiyni, “al-Ustoz” deganda esa al-Margʻinoniyni"],
+        answer: 3
+    },
+    {
+        q: "“Kashfuz zunun” sohibi “insonlar qalbidagi iymoniy aqidani poklash uchun kifoya qiladigan kalom ilmining eng muhim qoidalarini oʻz ichiga olgan muxtasar” deya taʼriflagan va 1843-yilda Londonda Kyurton (Cureton) tomonidan nashr etilgan asar qaysi?",
+        options: ["“al-Eʼtimod fil eʼtiqod” («الاعتماد في الاعتقاد»)", "“Umdatul aqoid” («عمدة العقائد»)", "“al-Laoliul foxira fi ulumil oxira” («اللآلئ الفاخرة في علوم الآخرة»)", "“Kanzud daqoiq” («كنز الدقائق»)"],
+        answer: 1
+    },
+    {
+        q: "“Umdatul aqoid” kitobiga yozilgan sharhlar va ularning mualliflari haqidagi qaysi maʼlumot toʻgʻri?",
+        options: ["Jamoliddin Mahmud ibn Ahmad al-Qunaviy (vaf. 770 h.) uni sharhlab, sharhini “az-Zubda” («الزبدة») deb nomlagan", "Imom an-Nasafiyning oʻzi uni sharhlab, “al-Intiqod fi sharhi Umdatil eʼtiqod” deb nomlagan", "Akmaluddin al-Bobartiy (vaf. 786 h.) uni sharhlab, “al-Eʼtimod fil eʼtiqod” deb nomlagan", "Ahmad ibn Oʻgʻuz Donishmand al-Oqshahriy (vaf. 800 h.) uni sharhlab, “az-Zubda” deb nomlagan"],
+        answer: 0
+    },
+    {
+        q: "Imom an-Nasafiyning eng mashhur asari boʻlmish “Madorikut tanzil va haqoiqut taʼvil” qaysi tafsirlarning muxtasari hisoblanadi?",
+        options: ["Faxriddin Roziy tafsiri va “Tafsirut Tabariy”", "“Tafsirul Qurtubiy” va “Tafsiru Ibn Kasir”", "“at-Taysir fit tafsir” va “Taʼvilotu ahlis sunna”", "“Tafsirul Kashshof” va “Tafsirul Bayzoviy”"],
+        answer: 3
+    },
+    {
+        q: "“Madorikut tanzil” asarining xususiyatlari haqida keltirilgan quyidagi fikrlardan qaysi biri matnga muvofiq?",
+        options: ["Muallif unda fiqhiy ahkomlarni juda keng va batafsil tahlil qilib, faqat shofeʼiy mazhabi qavllarini tarjih qilgan", "Asarda isroiliyotlar kam zikr qilingan boʻlib, Dovud va Sulaymon qissasi hamda “Gʻaroniq” qissasida ularning hujjat emasligi eslatib oʻtilgan", "Asarda mutavotir yetti qiroatga va eʼrob (grammatik tahlil) masalalariga umuman oʻrin berilmagan", "“Inson” surasining 8-oyati tafsirida suraning makkiy ekanini asos qilib, uning Aliy va Fotima roziyallohu anhumo haqida nozil boʻlganini qatʼiyan rad etgan"],
+        answer: 1
+    },
+    {
+        q: "Imom an-Nasafiyning “Madorikut tanzil” va “Kanzud daqoiq” asarlari haqidagi qaysi maʼlumot toʻgʻri?",
+        options: ["“Kanzud daqoiq” kalom ilmiga oid asar boʻlib, uning birinchi jumlasi “Qola ahlul haqqi haqoiqul ashyoʻi sobitatun” soʻzlari bilan boshlanadi", "“Madorikut tanzil”ning birorta ham bosma yoki qoʻlyozma nusxasi topilmagan boʻlib, u haqda faqat “Hadiyyatul orifin”da zikr qilingan", "“Madorikut tanzil” oʻz davridagi hukmdor (valiyyul-amr)ning soʻroviga javoban yozilgan; “Kanzud daqoiq”da esa baʼzi ulamolarga ishora qiluvchi maxsus harflar qoʻllangan", "“Kanzud daqoiq” Faxriddin Roziy tafsirining muxtasari hisoblanadi"],
+        answer: 2
+    },
+    {
+        q: "«شرح الكافي» kimning asari?",
+        options: ["Ibn Hojib", "Shayxulislom Burxonuddin Margʻinoniy", "Imom Nasafiy", "Toju sharia"],
+        answer: 2
+    },
+    {
+        q: "«منار الأنوار» (Manar ul-anvor) asari kimga tegishli?",
+        options: ["Mulla Jiyvon", "Abul Barakot Nasafiy", "Abul Muiyn Nasafiy", "Hibatulloh ibn Ahmad Turkistoniy"],
+        answer: 1
+    },
+    {
+        q: "Abul Barakot Nasafiyning asarlarini toping!",
+        options: ["كشف الأسرار (Kashf ul-asror)", "تبصرة الأدلة (Tabsirat ul-adilla)", "«التَمْهِيد لِقَوَاعِد التَّوْحِيد (Attamhidu liqovaid attavhid)", "Hamma javoblar toʻgʻri"],
+        answer: 0
+    },
+    {
+        q: "Imom Nasafiy kitobida tayangan moturudiy imomlaridan notoʻgʻri berilganini toping.",
+        options: ["Imom Boqilloniy", "Imom Moturudiy", "Abul Hasan ar-Rustugʻfaniy", "Hammasi notoʻgʻri berilgan."],
+        answer: 0
+    },
+    {
+        q: "Abul Hasan ar-Rustugʻfaniyni qaysi masalada zikr qilganlar?",
+        options: ["Iymonni ziyoda, noqis boʻlmasligi", "Rizq masalasida", "Takvin masalasida", "Bandalarning feʼllari masalasida"],
+        answer: 1
+    },
+    {
+        q: "Imom Nasafiy ularning fikrini johillikda sifatlagan toifa qaysi edi?",
+        options: ["Rofiziylar", "Jabariylar", "Mushabhiha", "Murjia"],
+        answer: 3
+    },
+    {
+        q: "Iroda sifatini oʻz ichiga olgan faslda bir marta zikr qilingan toifa:",
+        options: ["Najjoriyya", "Jabariyya", "Karromiyya", "Jahmiyya"],
+        answer: 0
+    },
+    {
+        q: "Alloh 3 ta uqnumdan iborat javhar degan toifa:",
+        options: ["Mushabhiha", "Nasoro lar", "Yahudiylar", "Karromiylar"],
+        answer: 1
+    },
+    {
+        q: "«التَمْهِيد لِقَوَاعِد التَّوْحِيد» asari kimga tegishli?",
+        options: ["Abul Barakot Nasafiy", "Abul Muin Nasafiy", "Abu Hafs Nasafiy", "Abu Ishoq al-Isfiroiniy"],
+        answer: 1
+    },
+    {
+        q: "Allohni oliy jihatda degan toifa:",
+        options: ["Najjoriylar", "Karromiylar", "Mushabbihalar", "Mujassimalar"],
+        answer: 1
+    },
+    {
+        q: "Allohning hamma sifati zotiydir, uni feʼli zotiga ajratilmaydi degan kimlar?",
+        options: ["Moturiudiylar", "Karromiylar", "Ashariylar", "Moʻtaziliylar"],
+        answer: 0
+    },
+    {
+        q: "Allohning kalom sifati zotida hodis deganlar kim?",
+        options: ["Moʻtaziliylar", "Jahmiylar", "Karromiylar", "Hanbaliylar"],
+        answer: 2
+    },
+    {
+        q: "Mavjudotlarni, bir vajhni qoyib birida, bir vaqtni qoyib boshqasida xoslashligi Allohning qaysi sifati?",
+        options: ["Qudrat", "Iroda", "Takvin", "Xoliq"],
+        answer: 1
+    },
+    {
+        q: "“Al-Mustasfa” – kimga tegishli manzuma?",
+        options: ["Abul Barakot Nasafiy", "Abul Muin Nasafiy", "Abu Hafs Umar Nasafiy", "Jaloliddin Suyutiy"],
+        answer: 2
+    },
+    {
+        q: "«تَلْخِيصُ الأَدِلَّةِ لِقَوَاعِدِ التَّوْحِيدِ» asari kimga tegishli?",
+        options: ["Abu Ishoq As-Soffar Al-Buxoriy", "Abul Muin Nasafiy", "Mulla Jiyvon", "Abu Hafs Umar Nasafiy"],
+        answer: 0
+    },
+    {
+        q: "Imom Nasafiy rahimahulloh Avliyolarning karomatlarini isbot qilish borasidagi masalalarni qaysi bobda keltirib oʻtgan?",
+        options: ["Ilohiyot", "Nubuvvat", "Samʼiyyot", "Gʻaybiyot"],
+        answer: 1
+    },
+    {
+        q: "Imom Nasafiy “bandalarning feʼllari” necha qism ekanligini bayon qilganlar?",
+        options: ["qismlanmaydi", "4 qism", "2 qism", "3 qism"],
+        answer: 2
+    },
+    {
+        q: "Bandaning feʼli qaysi jihatdan Allohning maqduri va qaysi jihatdan bandaning maqduri hisoblanadi?",
+        options: ["Ikkala qudrat uchun ham bir jihatdan, yaʼni xalq jihatidan", "Allohning maqduri kasb jihatidan, bandaning maqduri xalq jihatidan", "Allohning maqduri xalq jihatidan, bandaning maqduri kasb jihatidan", "Bitta maqdur ikki qudrat orasida bir jihatdan voqe boʻladi"],
+        answer: 2
+    },
+    {
+        q: "Ashʼariylar - taklif ma la yutoq haqida nima deydi?",
+        options: ["Bunday taklif joiz emas", "Bunday taklif faqat paygʻambarlarga nisbatan joiz", "Bunday taklif joiz", "Bu masalada hukm chiqarib boʻlmaydi"],
+        answer: 2
+    },
+    {
+        q: "Iymonning mohiyatini 1-maʼrifat / 2-iqror deb aytadigan toifalarni toʻgʻri belgilang",
+        options: ["Karromiylar-1 / Jahmiylar-2", "Najjoriylar-2 / Zaydiylar - 1", "Moʻtazilalar-1 / Karromiylar-2", "Jahmiylar-1 / Karromiylar-2"],
+        answer: 3
+    },
+    {
+        q: "Farishtalarning savol javoblari, qabr azobi, hashr, miyzon kabi masalalar aqida fanining qaysi bobida oʻrganiladi?",
+        options: ["Samʼiyyot", "Ilohiyot", "Gʻaybiyyot", "Oxir zamon"],
+        answer: 0
+    },
+    {
+        q: "Nasafiy iymon bahsini nimadan boshlaydi?",
+        options: ["Iymonning taʼrifidan boshladi, boshqa mutakallimlar kabi", "Firqalar orasidagi ixtilofdan", "Iymon farz ekanini bayon qilishdan", "Iymonning ziyoda boʻlishi masalasidan"],
+        answer: 2
+    },
+    {
+        q: "Imom Nasafiyning ayytishicha, iymonning vojib boʻlishi borasidagi samarotul ixtilof kimni haqqida zohir boʻladi?",
+        options: ["Fatrat davrida yashab, iymon keltirmasdan oʻtib ketgan kishi haqqi borasida", "Togʻ ustida yashab, tabligʻ yetib bormagan kishi haqida", "Hamma javoblar toʻgʻri"],
+        answer: 2
+    },
+    {
+        q: "Mulhida, Rofiza, Mushabbiha va xavorijiylarga koʻra iymonning husnligi va kufrning qabihligi nima bilan bilinadi?",
+        options: ["Aql bilan", "Faqat shariat bilan", "Aql va shariat birgalikda", "Hiss bilan"],
+        answer: 1
+    },
+    {
+        q: "Moʻtazilalarga koʻra aql nimani vojib qiladi?",
+        options: ["Faqat ibodatlarni", "Hech narsani vojib qilmaydi", "Iymonni va inʼom etuvchiga shukr qilishni", "Faqat haromdan saqlanishni"],
+        answer: 2
+    },
+    {
+        q: "\"Ahli kitoblar paygʻambarni oʻz oʻgʻillarini taniganidek taniydi\" oyatidan kelib chiqadigan xulosa qaysi?",
+        options: ["Ahli kitoblar moʻmin boʻlishgan", "Maʼrifat - iymonning oʻzi", "Ular paygʻambarlarni bilgan, shu sabab doʻzaxda abadiy qolishmaydi", "Ular paygʻambarni bilgan, lekin moʻmin boʻlmagan"],
+        answer: 3
+    },
+    {
+        q: "Eʼtimod fil eʼtiqod asari qaysi matnning sharhi?",
+        options: ["Umdat-ul aqoid", "Aqoidi nasafiyya", "Moʻtamad min al-moʻtaqod", "Biror matnga sharh emas oʻzi mustaqil kitob"],
+        answer: 0
+    },
+    {
+        q: "Soʻfistoiylarning daʼvolarini toping.",
+        options: ["Biror narsani haqiqatini bilib boʻlmaydi.", "Biror narsaning haqiqati yoʻq.", "Narsalarning haqiqatlari eʼtiqod qiluvchilarning eʼtiqodlariga tobe.", "Barcha javoblar toʻgʻri."],
+        answer: 3
+    },
+    {
+        q: "Soʻfistoiylar bilan munozara qilib boʻladimi?",
+        options: ["Ha boʻladi.", "Baʼzilar naznida boʻladi.", "Oqillarning ijmosi ila boʻlmaydi.", "Mutakallimlarning ijmosi ila boʻlmaydi."],
+        answer: 2
+    },
+    {
+        q: "Taqsim nima uchun vazʼ qilingan?",
+        options: ["Kulliyyot vasitasida juziyyotni bilish uchun.", "Juziyyot vositasida kulliyyotni bilish uchun.", "Juziyyot vositasida juziyyotni bilish uchun.", "Kulliyyot vositasida kulliyyotni bilish uchun."],
+        answer: 1
+    },
+    {
+        q: "Mutakallimlardan kim maʼdumni bilib boʻmaydi deb aytgan?",
+        options: ["Nazzom", "Isfroiyniy", "Hishom", "Abu hoshim"],
+        answer: 2
+    },
+    {
+        q: "العلم معرفة المعلوم على ما هو به Ushbu taʼrif qaysi kalomiy mazhab olimiga tegishli?",
+        options: ["Moturiydiy olim.", "Moʻtaziliy olim.", "Ashʼariy olim.", "Qadariy olim."],
+        answer: 2
+    },
+    {
+        q: "Ushbu ilmning taʼriflari ichidan, taʼrifdan koʻzlangan maqsadga qarama-qarshi illat mavjud boʻlgan taʼrifni toping.",
+        options: ["إعتقاد الشيء على ما هو به", "تبين المعلوم على ما هو به", "ما أوجب العالم", "ما يتجلى بها المذكور لمن قامت"],
+        answer: 1
+    },
+    {
+        q: "Alloh taolo haqida \"Orif\" deb aytish joizmi?",
+        options: ["Yoʻq joiz emas.", "Karromiylarda joiz.", "Orif deb aytish ijmoʻga xilof.", "Barcha javoblar toʻgʻri."],
+        answer: 3
+    },
+    {
+        q: "العلم حركة القلب لوجدان ما يجد Bu kimning taʼrifi?",
+        options: ["Nazzom", "Kaʼbiy", "Johiz", "Jubboiy"],
+        answer: 0
+    },
+    {
+        q: "العلم صفة ينتفي بها عن الحي الجهل و الشك و الظن و السهو Ushbu taʼrif qaysi toifaga tegishli?",
+        options: ["Moturiydiylar", "Ashʼariylar", "Moʻtaziliylar", "Karromiylar"],
+        answer: 0
+    },
+    {
+        q: "Abul barokat nasafiy rohimahulloh eʼtimod asarida ilm borasida kimning qarashini sahih degan?",
+        options: ["Faxriddin Roziy", "Abu Mansur Moturiydiy", "Abul Hasan Ashʼariy", "Abul Muʼin Nasafiy"],
+        answer: 1
+    },
+    {
+        q: "Ilm taʼrifdan behojat deb kim aytgan?",
+        options: ["Gʻazzoliy", "Roziy", "Jurjoniy", "Taftazoniy"],
+        answer: 1
+    },
+    {
+        q: "Yaqiniy ilm hosil qilish vositalari nechta?",
+        options: ["1ta", "3ta", "5ta", "Son sanoqsiz"],
+        answer: 1
+    },
+    {
+        q: "Xabari sodiq deganda qaysi xabarlar nazarda tutiladi?",
+        options: ["Mutavotir va ohod xabarlar", "Mutavotir va paygʻambardan toʻgʻridan toʻgʻri eshitilgan xabar", "Mutavotir va mashhur xabar", "Barchasi toʻgʻri"],
+        answer: 1
+    },
+    {
+        q: "Havos as-salima toʻgʻri koʻrsatilgan javobni belgilang.",
+        options: ["samʼ, basor, lams, til, burun", "samʼ basor, burun, til, lams", "quloq, til, koʻz, burun, qoʻl", "samʼ, basor, sham, zavq, lams"],
+        answer: 3
+    },
+    {
+        q: "Xabar bilan yaqiniy ilm hosil boʻlishini kimlar inkor qiladi?",
+        options: ["Sumaniy va barohima", "Sumaniy, mulhid va moʻtazila", "Sumaniy, Rofiziy va barohima", "Ashʼariylar va moʻtaziliylar"],
+        answer: 0
+    },
+    {
+        q: "Nasroniy va Yahudiylarning Iyso alayhissalomning qatl qilinganlari haqidagi xabarlari ham mutavotirku, demak bu ham yaqiniy ilmni ifoda etadimi?",
+        options: ["Ha ifoda etadi", "mutavotir boʻlsa ham yaqiniy ilmni ifoda etmaydi.", "bu mutavotir emas chunki avvalida ohod boʻlgan.", "mutavotir boʻlsada qurʼonga xilof kelgani sabab qabul qilinmaydi."],
+        answer: 2
+    },
+    {
+        q: "Aql yaqiniy ilmni ifoda etuvchu vosita boʻlsa nega unda oqillar oʻzaro xilof qiladilar, yaqiniy ilm bir-biriga zid kelmaydi-ku?",
+        options: ["aqlning hukmlari bir-biriga zid boʻlgani uchun", "baʼzilarining aqllari qosir yoki nazar shartlariga rioya etmaganlari uchun", "bu aqlning hujjat emasligini koʻrsatadi", "aql ilohiyyot masalasida hujjat boʻla olmagani uchun"],
+        answer: 1
+    },
+    {
+        q: "Aql ila hosil qilinadigan ilmlarning turlari toʻla va toʻgʻri koʻrsatilgan javobni toping.",
+        options: ["zaruriy va iktisobiy", "zaruriy va badihiy", "istidloliy va iktisobiy", "huzuriy va istidloliy"],
+        answer: 0
+    },
+    {
+        q: "Aqllar asl fitratga koʻra tafovutlimi yoki yoʻq degan masala qaysi ixtilofiy masaladan kelib chiqadi?",
+        options: ["husn va qubh", "salah va aslah", "aql hujjat yoki yoʻq", "xabar hujjat yoki yoʻq"],
+        answer: 1
+    },
+    {
+        q: "Ilhom yaqiniy ilm uchun vosita boʻla oladimi?",
+        options: ["yoʻq boʻla olmaydi", "boʻla oladi", "ahli sunna bu masalada ixtilof qilgan", "ashʼariylarda boʻladi"],
+        answer: 0
+    },
+    {
+        q: "Arastuning olam haqidagi qarashini toping.",
+        options: ["olam hodis", "olamning zoti qadim, sifati hodis", "olam zoti va sifati ila qadim", "olam zoti va sifati ila hodis"],
+        answer: 2
+    },
+    {
+        q: "Aksar faylasuflarning olam borasidagi qarashini toping.",
+        options: ["zoti ila qadim, sifati ila hodis", "sifati ila qadim, zoti ila hodis", "zoti-yu sifati ila qadim", "zoti-yu sifati ila hodis"],
+        answer: 0
+    },
+    {
+        q: "Majusiylarning olamning qadim yoki hodisligi borasidagi qarashi qanday?",
+        options: ["musulmonlar bilan bir xil", "faylasuflar bilan bir xil", "Arastuning fikriga yaqin", "oʻzlarining xos qarashlari mavjud"],
+        answer: 0
+    },
+    {
+        q: "Muhdasning taʼrifi qanday?",
+        options: ["ما لوجوده انتهاء", "الذي يكون مسبوقا بالعدم", "الذي يكون محتاحا للغير", "كله صحيح"],
+        answer: 1
+    }
+];
+
+function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+const selectedQuestions = shuffleArray(rawQuestions).slice(0, 30).map(item => {
+    const originalAnswerText = item.options[item.answer];
+    const shuffledOptions = shuffleArray(item.options);
+    const newAnswerIndex = shuffledOptions.indexOf(originalAnswerText);
+    return {
+        q: item.q,
+        options: shuffledOptions,
+        answer: newAnswerIndex
+    };
+});
+
+const container = document.getElementById('questions-container');
+document.getElementById('q-counter').innerText = `${selectedQuestions.length}/30`;
+
+selectedQuestions.forEach((qObj, index) => {
+    const qDiv = document.createElement('div');
+    qDiv.className = 'q-card';
+    
+    let optionsHtml = '';
+    qObj.options.forEach((opt, optIndex) => {
+        optionsHtml += `
+            <li class="option-item">
+                <label class="option-label">
+                    <input type="radio" name="question_${index}" value="${optIndex}" required>
+                    ${opt}
+                </label>
+            </li>
+        `;
+    });
+
+    qDiv.innerHTML = `
+        <div class="q-text">${index + 1}. ${qObj.q}</div>
+        <ul class="options">${optionsHtml}</ul>
+    `;
+    container.appendChild(qDiv);
+});
+
+let totalSeconds = 40 * 60;
+const timerElement = document.getElementById('time-left');
+
+const timerInterval = setInterval(() => {
+    if (totalSeconds <= 0) {
+        clearInterval(timerInterval);
+        finishQuiz();
+    } else {
+        totalSeconds--;
+        const m = Math.floor(totalSeconds / 60);
+        const s = totalSeconds % 60;
+        timerElement.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+}, 1000);
+
+document.getElementById('quiz-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    clearInterval(timerInterval);
+    finishQuiz();
+});
+
+function finishQuiz() {
+    let score = 0;
+    const form = document.getElementById('quiz-form');
+    const formData = new FormData(form);
+
+    selectedQuestions.forEach((qObj, index) => {
+        const userAnswer = formData.get(`question_${index}`);
+        if (userAnswer !== null && parseInt(userAnswer) === qObj.answer) {
+            score++;
+        }
+    });
+
+    const usedSeconds = (40 * 60) - totalSeconds;
+    const usedMinutes = Math.floor(usedSeconds / 60);
+    const usedSecs = usedSeconds % 60;
+
+    document.getElementById('quiz-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'block';
+    document.getElementById('score-text').innerText = `${score} / 30`;
+    document.getElementById('time-taken-text').innerText = `Sarflangan vaqt: ${usedMinutes} daqiqa ${usedSecs} soniya`;
+}
+</script>
+</body>
+</html>
